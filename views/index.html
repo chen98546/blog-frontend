@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title>Document</title>
+	<link rel="stylesheet" href="/bootstrap/css/bootstrap.css">
+	<link rel="stylesheet" href="/css/base.css">
+	<style>
+		.content .item {
+			margin-top: 10px;
+			margin-bottom: 10px;
+		}
+
+		.content .item img {
+			width: 100%;
+			height: 100%;
+			box-shadow: 0px 0px 10px #ccc;
+
+		}
+
+		.content .item .title:hover {
+			text-decoration: underline;
+			cursor: pointer;
+		}
+
+
+		.content .item div:first-child:hover img {
+			opacity: 0.7;
+			cursor: pointer;
+			transition: all 0.3s ease-in-out;
+		}
+
+		.content .item .intro {
+			margin-top: 10px;
+			color: #ccc;
+			font-size: 14px;
+		}
+	</style>
+</head>
+
+<body>
+	<div class="container">
+		<nav class="navbar navbar-default">
+			<div class="container-fluid">
+				<!-- Brand and toggle get grouped for better mobile display -->
+				<div class="navbar-header">
+					<button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
+						data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+						<span class="sr-only">Toggle navigation</span>
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+					</button>
+					<a class="navbar-brand" href="#" style="display:flex;">
+						小白的博客
+					</a>
+				</div>
+
+				<!-- Collect the nav links, forms, and other content for toggling -->
+				<div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+
+					<ul class="nav navbar-nav navbar-right">
+						<li><a href="#">首页</a></li>
+						<li class="dropdown">
+							<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button"
+								aria-haspopup="true" aria-expanded="false">分类 <span class="caret"></span></a>
+							<ul class="dropdown-menu" id="cateList">
+								<!-- <li><a href="/cate.html?id=2">html</a></li>
+									<li><a href="/cate.html?id=2">css</a></li>
+									<li><a href="/cate.html?id=2">javascript</a></li>
+									<li role="separator" class="divider"></li>
+									<li><a href="/cate.html?id=2">mysql</a></li>
+									<li><a href="/cate.html?id=2">Linux</a></li> -->
+							</ul>
+						</li>
+						<li><a href="/tags.html">标签</a></li>
+						<li><a href="/about.html">关于我</a></li>
+					</ul>
+				</div><!-- /.navbar-collapse -->
+			</div><!-- /.container-fluid -->
+		</nav>
+
+		<div class="content">
+			<h4>最新文章</h4>
+			<div class="artlist" id="artList"></div>
+		</div>
+		<button type="button" class="btn  btn-block" id="loadMore">查看更多</button>
+		<hr>
+
+		<div class="footer" style="text-align:center;font-size: 14px; color: #999;margin:10px 0;">
+			首页 | 主站 | GitHub | created at 2020/02/4 | Powered by 小白
+		</div>
+	</div>
+</body>
+<script src="/js/jquery.js"></script>
+<script src="/bootstrap/js/bootstrap.min.js"></script>
+<script src="/js/moment.js"></script>
+
+<script>
+	let page = 1;
+	let limit = 2;
+	let flag = false;
+	// 分类
+	async function frontCateFn() {
+		let res = await $.get('http://127.0.0.1:12580/api/frontCategory')
+		let str = '';
+		res.forEach(item => {
+			str += `<li><a href="/cate?id=${item.cate_id}">${item.cate_name}</a></li>`
+		})
+		$('#cateList').html(str)
+	}
+	frontCateFn();
+
+
+	// 文章
+	async function frontArtFn(page, limit) {
+		let res = await $.get(`http://127.0.0.1:12580/api/frontArtData?page=${page}&limit=${limit}`);
+		if (res.length === 0) {
+			alert('数据加载完毕')
+			flag = true;
+			return false;
+		}
+		let str = '';
+		res.forEach(item => {
+			let {
+				u_name,
+				art_content,
+				art_date,
+				art_id,
+				art_pic,
+				art_status,
+				art_title,
+				cate_name,
+				cate_id
+			} = item
+			art_date = moment(art_date).format('YYYY-MM-DD')
+			str += `
+				<div class='item row'>
+					<div class="col-md-2">
+						<img src="http://127.0.0.1:12580/${art_pic}" alt="">
+					</div>
+					<div class="col-md-10">
+						<div class="date ">作者：${u_name}； 时间：${art_date}； 分类：<a href="/cate?id=${cate_id}">${cate_name}</a></div>
+						<a href="/detail?id=${art_id}"><div class="title">${art_title}</div></a>
+						<div class="intro">${art_content}</div>
+					</div>
+					<hr>
+				</div>
+			`
+		})
+		let oldData = $('#artList').html();
+		$('#artList').html(oldData + str);
+	}
+	frontArtFn(page, limit)
+
+
+	// 单击加载更多
+	$("#loadMore").on('click', () => {
+		if (flag) {
+			alert('我也是有底线的')
+			return;
+		}
+		page++
+		frontArtFn(page, limit)
+	})
+</script>
+
+</html>
